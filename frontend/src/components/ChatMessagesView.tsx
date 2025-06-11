@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+
 import {
   ActivityTimeline,
   ProcessedEvent,
@@ -220,7 +220,7 @@ interface ChatMessagesViewProps {
   messages: Message[];
   isLoading: boolean;
   scrollAreaRef: React.RefObject<HTMLDivElement | null>;
-  onSubmit: (inputValue: string, effort: string) => void;
+  onSubmit: (inputValue: string, effort: string, selectedModel: string) => void;
   onCancel: () => void;
   liveActivityEvents: ProcessedEvent[];
   historicalActivities: Record<string, ProcessedEvent[]>;

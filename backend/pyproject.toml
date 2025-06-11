@@ -19,6 +19,7 @@ dependencies = [
     "langgraph-api",
     "fastapi",
     "tavily-python",
+    "httpx>=0.24.0",
 ]
 
 
