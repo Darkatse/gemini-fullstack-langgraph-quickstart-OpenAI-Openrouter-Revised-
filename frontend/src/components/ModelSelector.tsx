@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Cpu, Loader2, AlertCircle, Info } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Cpu, Loader2, AlertCircle, Info, Search, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export interface ModelInfo {
   id: string;
@@ -41,10 +42,31 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   useEffect(() => {
     fetchModels();
   }, []);
+
+  // Show search when there are more than 10 models
+  useEffect(() => {
+    setIsSearchVisible(models.length > 10);
+  }, [models.length]);
+
+  // Filter models based on search query
+  const filteredModels = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return models;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    return models.filter(model =>
+      model.name.toLowerCase().includes(query) ||
+      model.id.toLowerCase().includes(query) ||
+      (model.description && model.description.toLowerCase().includes(query))
+    );
+  }, [models, searchQuery]);
 
   const fetchModels = async () => {
     try {
@@ -95,6 +117,22 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const selectedModelInfo = models.find(m => m.id === selectedModel);
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow Escape key to clear search
+    if (e.key === 'Escape') {
+      clearSearch();
+      e.preventDefault();
+    }
+  };
 
   const formatPrice = (price?: string) => {
     if (!price || price === "0") return "Free";
@@ -154,27 +192,66 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
               {selectedModelInfo ? getModelDisplayName(selectedModelInfo) : "Select model"}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer max-h-[300px] overflow-y-auto">
-            {models.map((model) => (
-              <SelectItem
-                key={model.id}
-                value={model.id}
-                className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium">{getModelDisplayName(model)}</span>
-                  {model.pricing && (
-                    <span className="text-xs text-neutral-400">
-                      Input: {formatPrice(model.pricing.prompt)}/token • 
-                      Output: {formatPrice(model.pricing.completion)}/token
-                    </span>
+          <SelectContent className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer max-h-[400px] overflow-y-auto">
+            {/* Search input when there are many models */}
+            {isSearchVisible && (
+              <div className="sticky top-0 z-10 p-2 bg-neutral-700 border-b border-neutral-600">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input
+                    type="text"
+                    placeholder={`Search ${models.length} models...`}
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                    className="pl-8 pr-8 bg-neutral-800 border-neutral-600 text-neutral-300 placeholder-neutral-400 focus:ring-neutral-500 focus:border-neutral-500"
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearSearch}
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-neutral-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   )}
                 </div>
-              </SelectItem>
-            ))}
+                {searchQuery && (
+                  <div className="text-xs text-neutral-400 mt-1 px-1">
+                    {filteredModels.length} of {models.length} models
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Model list */}
+            {filteredModels.length === 0 ? (
+              <div className="p-4 text-center text-neutral-400 text-sm">
+                {searchQuery ? "No models found matching your search" : "No models available"}
+              </div>
+            ) : (
+              filteredModels.map((model) => (
+                <SelectItem
+                  key={model.id}
+                  value={model.id}
+                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">{getModelDisplayName(model)}</span>
+                    {model.pricing && (
+                      <span className="text-xs text-neutral-400">
+                        Input: {formatPrice(model.pricing.prompt)}/token •
+                        Output: {formatPrice(model.pricing.completion)}/token
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
-        
+
         {selectedModelInfo && (
           <Button
             variant="ghost"
