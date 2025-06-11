@@ -20,10 +20,13 @@ export default function App() {
     initial_search_query_count: number;
     max_research_loops: number;
     reasoning_model: string;
+    query_generator_model?: string;
+    reflection_model?: string;
+    answer_model?: string;
   }>({
     apiUrl: import.meta.env.DEV
       ? "http://localhost:2024"
-      : "http://localhost:8123",
+      : "http://localhost:2024", // Updated to use consistent port
     assistantId: "agent",
     messagesKey: "messages",
     onFinish: (event: any) => {
@@ -97,7 +100,7 @@ export default function App() {
   }, [thread.messages, thread.isLoading, processedEventsTimeline]);
 
   const handleSubmit = useCallback(
-    (submittedInputValue: string, effort: string) => {
+    (submittedInputValue: string, effort: string, selectedModel: string) => {
       if (!submittedInputValue.trim()) return;
       setProcessedEventsTimeline([]);
       hasFinalizeEventOccurredRef.current = false;
@@ -131,10 +134,16 @@ export default function App() {
           id: Date.now().toString(),
         },
       ];
+
+      // Submit with model configuration
       thread.submit({
         messages: newMessages,
         initial_search_query_count: initial_search_query_count,
         max_research_loops: max_research_loops,
+        // Include model configuration in the main payload for now
+        query_generator_model: selectedModel,
+        reflection_model: selectedModel,
+        answer_model: selectedModel,
       });
     },
     [thread]

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SquarePen, Brain, Send, StopCircle, Zap, Cpu } from "lucide-react";
+import { SquarePen, Brain, Send, StopCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -9,10 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ModelSelector } from "@/components/ModelSelector";
 
-// Updated InputFormProps
+// Updated InputFormProps to include model selection
 interface InputFormProps {
-  onSubmit: (inputValue: string, effort: string) => void; // 'model' arugment is removed
+  onSubmit: (inputValue: string, effort: string, selectedModel: string) => void;
   onCancel: () => void;
   isLoading: boolean;
   hasHistory: boolean;
@@ -26,12 +27,13 @@ export const InputForm: React.FC<InputFormProps> = ({
 }) => {
   const [internalInputValue, setInternalInputValue] = useState("");
   const [effort, setEffort] = useState("medium");
-  
+  const [selectedModel, setSelectedModel] = useState("deepseek/deepseek-r1-0528:free");
+
   const handleInternalSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!internalInputValue.trim()) return;
-    // The 'model' is no longer part of the form state
-    onSubmit(internalInputValue, effort);
+    // Include selected model in submission
+    onSubmit(internalInputValue, effort, selectedModel);
     setInternalInputValue("");
   };
 
@@ -94,8 +96,17 @@ export const InputForm: React.FC<InputFormProps> = ({
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex flex-row gap-2">
-          <div className="flex flex-row gap-2 bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm pl-2  max-w-[100%] sm:max-w-[90%]">
+        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+          {/* Model Selector */}
+          <ModelSelector
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            disabled={isLoading}
+            className="flex-1 min-w-0"
+          />
+
+          {/* Effort Selector */}
+          <div className="flex flex-row gap-2 bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm pl-2 min-w-fit">
             <div className="flex flex-row items-center text-sm">
               <Brain className="h-4 w-4 mr-2" />
               Effort
